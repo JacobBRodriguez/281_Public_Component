@@ -1,0 +1,61 @@
+const createError = require('http-errors');
+const express = require('express');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
+// Self added imports
+const mysql = require('mysql');
+const dotenv = require('dotenv');
+
+const indexRouter = require('./routes/index');
+const usersRouter = require('./routes/users');
+const adminRouter = require('./routes/admin');
+
+const app = express();
+
+// view engine setup
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'pug');
+
+app.use(logger('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// dotenv.config({path: '.env'});
+//
+// // Create SQL Connection to AWS RDBMS
+// const sql_con = mysql.createConnection({
+//   host: process.env.SQL_HOST,
+//   user: process.env.SQL_USER,
+//   port: process.env.SQL_PORT,
+//   password: process.env.SQL_PWD
+// });
+
+// sql_con.connect(function(err) {
+//   if (err) throw err;
+//   console.log("Connected to RDBMS!");
+// })
+
+app.use('/', indexRouter);
+app.use('/user', usersRouter);
+app.use('/admin', adminRouter);
+
+// catch 404 and forward to error handler
+app.use(function(req, res, next) {
+  next(createError(404));
+});
+
+// error handler
+app.use(function(err, req, res, next) {
+  // set locals, only providing error in development
+  res.locals.message = err.message;
+  res.locals.error = req.app.get('env') === 'development' ? err : {};
+
+  // render the error page
+  res.status(err.status || 500);
+  res.render('error');
+});
+
+module.exports = app;
