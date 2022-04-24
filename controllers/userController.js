@@ -39,7 +39,8 @@ const login = async (req, res) => {
     const password = req.body.userPassword;
 
     // Check if userName in system
-    sql_con.query(`SELECT userName, userPassword, userEmail FROM User WHERE userName LIKE ?`,[req.body.userName], function(err, result, fields) {
+    sql_con.query(`SELECT userName, userPassword, userEmail, isAdmin FROM User WHERE userName LIKE ?`,[req.body.userName],
+        function(err, result, fields) {
         if (err) {
             console.log(err);
             res.send({
@@ -52,7 +53,7 @@ const login = async (req, res) => {
         else {
 
             // If no results found
-            if(result.length == 0) {
+            if(result.length === 0) {
                 res.send({
                     "result": "Not Found",
                     "status": 400,
@@ -62,14 +63,16 @@ const login = async (req, res) => {
             else {
                 // Found entry and need to compare passwords
                 bcrypt.compare(password, result[0].userPassword, function (err, result_pass) {
-                    if(result_pass == true) {
+                    if(result_pass === true) {
                         res.cookie('cookie', 'user', {maxAge: 9000000, httpOnly: false, path: '/'});
                         res.cookie('userName', result[0].userName);
+                        const isAdmin = result[0].isAdmin === 1 ? 'Yes' : 'No';
                         res.send( {
                             "result": "Success",
                             "status": 200,
                             "userName": result[0].userName,
-                            "userEmail": result[0].userEmail
+                            "userEmail": result[0].userEmail,
+                            "isAdmin": isAdmin
                         })
                     }
                     else {
@@ -169,7 +172,7 @@ const bookAV = async (req, res) => {
 
     let body = req.body;
 
-    sql_con.query(`CALL bookRide(?,?, @av_out); SELECT @av_out`, [body.av_id, req.params.userName],
+    sql_con.query(`CALL bookAV(?,?, @av_out); SELECT @av_out AS result`, [body.av_id, req.params.userName],
         function(err, result, fields) {
             if (err) {
                 console.log(err);
@@ -182,9 +185,8 @@ const bookAV = async (req, res) => {
             }
             // Else check if AV was booked or not
             else {
-                console.log(result[0]);
 
-                if(result[0].av_out == 'Booked'){
+                if(result[1][0].result === "Booked"){
                     res.send({
                         "result": "success",
                         "status": 200
@@ -206,8 +208,8 @@ const bookAV = async (req, res) => {
 // Get the status of the booked AV
 const getAVStatus = async (req, res) => {
 
-    sql_con.query(`SELECT location FROM Autonomous_Vehicle WHERE id = (SELECT av_id FROM Ride WHERE userName LIKE ? `+
-                    `AND ride_status LIKE 'in_progress')`, [req.params.userName],
+    sql_con.query(`SELECT location, id, moving_state FROM Autonomous_Vehicle WHERE id = (SELECT av_id FROM Ride WHERE userName LIKE ? `+
+                    `AND ride_status LIKE 'in progress')`, [req.params.userName],
         function(err, result, fields) {
             if (err) {
                 console.log(err);
@@ -220,12 +222,14 @@ const getAVStatus = async (req, res) => {
             }
             // Else return AV location
             else {
-                if(result.length != 0) {
+                if(result.length !== 0) {
                     res.send({
                         "result": "success",
                         "status": 200,
                         "AV_Status": {
-                            "location": result[0].location
+                            "location": result[0].location,
+                            "AV_ID": result[0].id,
+                            "moving_state": result[0].moving_state
                         }
                     })
                 }
@@ -245,7 +249,7 @@ const getAVStatus = async (req, res) => {
 // Cancel booking for user
 const cancelBooking = async (req, res) => {
 
-    sql_con.query(`CALL cancelRide(?)`, [req.params.userName],
+    sql_con.query(`CALL cancelAVRide(?)`, [req.params.userName],
         function(err, result, fields) {
             if (err) {
                 console.log(err);

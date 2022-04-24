@@ -151,9 +151,10 @@ const updateAV = async (req, res) => {
     const body = req.body;
     sql_con.query(`UPDATE Autonomous_Vehicle SET location = IFNull(?, location), av_status = IFNull(?, av_status), `+
             `mileage = IFNull(?, mileage), make = IFNull(?, make), model = IFNull(?, model), av_year = IFNull(?, av_year), `+
-            `license = IFNull(?, license) WHERE id = ?`, [body.av_location, body.av_status, body.av_mileage,
-                                                            body.av_make, body.av_model, body.av_year, body.av_license,
-                                                            body.av_id],
+            `license = IFNull(?, license), service_state = IFNull(?, service_state), `+
+            `moving_state = IFNull(?, moving_state), userName = IFNull(?, userName) WHERE id = ?`,
+        [body.av_location, body.av_status, body.av_mileage, body.av_make, body.av_model, body.av_year, body.av_license,
+            body.service_state, body.moving_state, body.userName, body.av_id],
         function(err, result, fields) {
             if (err) {
                 console.log(err);
@@ -180,7 +181,8 @@ const createBill = async (req, res) => {
 
     const body = req.body;
     sql_con.query(`INSERT INTO Bill (bill_status, ride_id, cost, userName, bill_date, av_id) `+
-                    `VALUES ('outstanding', ?, ?, ?, now(), ?)`, [body.ride_id, body.cost, body.userName, body.AV_ID],
+                    `VALUES ('outstanding', ?, ?, ?, now(), ?); UPDATE Ride SET ride_status = 'completed' `+
+        `WHERE id = ?` , [body.ride_id, body.cost, body.userName, body.AV_ID, body.ride_id],
         function(err, result, fields) {
             if (err) {
                 console.log(err);
@@ -201,6 +203,86 @@ const createBill = async (req, res) => {
         });
 } // End Create Bill Entry
 
+// @route GET /av/all
+// Retrieve all AVs
+const allAVs = async (req, res) => {
+
+    sql_con.query(`SELECT id, userName, moving_state, service_state, location `+
+        `FROM Autonomous_Vehicle`, [req.body.userName],
+        function(err, result, fields) {
+            if (err) {
+                console.log(err);
+                res.send({
+                    "result": "Not Found",
+                    "status": 404,
+                    "message": "Could not get AVs"
+                });
+
+            }
+            // Else return success and payment info
+            else {
+                if(result.length === 0) {
+                    res.send({
+                        "result": "success",
+                        "status": 200,
+                        "message": "No AVs to be found"
+                    })
+                }
+                else {
+                    const AVs = result.map(av => ({AV_ID: av.id, Moving_State: av.moving_state,
+                        Service_State: av.service_state, Location: av.location, userName: av.userName}));
+                    res.send({
+                        "result": "success",
+                        "status": 200,
+                        "AVs": AVs
+                    })
+                }
+
+            }
+
+        });
+} // End GET all AVs
+
+// @route GET /av/{av_id}
+// Retrieve single AV by ID
+const oneAV = async (req, res) => {
+
+    sql_con.query(`SELECT id, userName, moving_state, service_state, location `+
+        `FROM Autonomous_Vehicle WHERE id = ?`, [req.params.av_id],
+        function(err, result, fields) {
+            if (err) {
+                console.log(err);
+                res.send({
+                    "result": "Not Found",
+                    "status": 404,
+                    "message": "Could not get AV"
+                });
+
+            }
+            // Else return success and payment info
+            else {
+                if(result.length === 0) {
+                    res.send({
+                        "result": "Not Found",
+                        "status": 404,
+                        "message": "No AV could be found"
+                    })
+                }
+                else {
+                    const AV = result.map(av => ({AV_ID: av.id, Moving_State: av.moving_state,
+                        Service_State: av.service_state, Location: av.location, userName: av.userName}));
+                    res.send({
+                        "result": "success",
+                        "status": 200,
+                        "AV": AV
+                    })
+                }
+
+            }
+
+        });
+} // End GET all AVs
+
 
 module.exports = {
     signUp,
@@ -208,5 +290,7 @@ module.exports = {
     updatePayment,
     paymentHistory,
     updateAV,
-    createBill
+    createBill,
+    allAVs,
+    oneAV
 }
