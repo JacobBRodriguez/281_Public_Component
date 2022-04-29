@@ -219,7 +219,7 @@ const allAVs = async (req, res) => {
                 });
 
             }
-            // Else return success and payment info
+            // Else return success and all AV info
             else {
                 if(result.length === 0) {
                     res.send({
@@ -259,7 +259,7 @@ const oneAV = async (req, res) => {
                 });
 
             }
-            // Else return success and payment info
+            // Else return success and AV info
             else {
                 if(result.length === 0) {
                     res.send({
@@ -283,6 +283,47 @@ const oneAV = async (req, res) => {
         });
 } // End GET all AVs
 
+// @route GET /av/{av_id}/ride/history
+// Retrieve all ride history for single AV by ID
+const avRideHistory = async (req, res) => {
+
+    sql_con.query(`SELECT id, userName, startLocation, finishLocation, estimatedArrival, ride_date `+
+        `FROM Ride WHERE av_id = ?`, [req.params.av_id],
+        function(err, result, fields) {
+            if (err) {
+                console.log(err);
+                res.send({
+                    "result": "Not Found",
+                    "status": 404,
+                    "message": "Could not get AV ride history"
+                });
+
+            }
+            // Else return success and AV ride history
+            else {
+                if(result.length === 0) {
+                    res.send({
+                        "result": "Not Found",
+                        "status": 404,
+                        "message": "No AV ride history available"
+                    })
+                }
+                else {
+                    const AV = result.map(av => ({Ride_ID: av.id, Username: av.userName,
+                        Start_Location: av.startLocation, End_Location: av.finishLocation,
+                        Estimated_Arrival: av.estimatedArrival, Ride_Date: av.ride_date}));
+                    res.send({
+                        "result": "success",
+                        "status": 200,
+                        "AV_Ride_History": AV
+                    })
+                }
+
+            }
+
+        });
+} // End GET AV ride history
+
 
 module.exports = {
     signUp,
@@ -292,5 +333,6 @@ module.exports = {
     updateAV,
     createBill,
     allAVs,
-    oneAV
+    oneAV,
+    avRideHistory
 }

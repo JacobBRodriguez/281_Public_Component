@@ -9,7 +9,8 @@ const {
     updateAV,
     createBill,
     allAVs,
-    oneAV
+    oneAV,
+    avRideHistory
 } = require('../controllers/adminController')
 
 // Will be reusing many of the user routes due to same functionality
@@ -41,6 +42,7 @@ router.get('/:userName/booking/history', bookingHistory)
 router.get('/:userName/payment/history', paymentHistory)
 router.get('/av/all', allAVs)
 router.get('/av/:av_id', oneAV)
+router.get('/av/:av_id/ride/history', avRideHistory)
 
 router.delete('/:userName/booking/cancel', cancelBooking)
 

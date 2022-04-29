@@ -7,6 +7,7 @@ const insertSR = async (req, res) => {
 
     const items = {...req.body};
     items.id = uuidv4();
+    items.time_created = Date.now();
 
     let params = {
         TableName: 'Service_Records',
@@ -39,6 +40,7 @@ const insertRS = async (req, res) => {
 
     const items = {...req.body};
     items.id = uuidv4();
+    items.time_created = Date.now();
 
     let params = {
         TableName: 'Ride_Statistics',
@@ -71,6 +73,7 @@ const insertSI = async (req, res) => {
 
     const items = {...req.body};
     items.id = uuidv4();
+    items.time_created = Date.now();
 
     let params = {
         TableName: 'Sensor_Information',
@@ -103,6 +106,7 @@ const insertEDL = async (req, res) => {
 
     const items = {...req.body};
     items.id = uuidv4();
+    items.time_created = Date.now();
 
     let params = {
         TableName: 'Emergency_Data_Logs',
@@ -241,6 +245,38 @@ const getSR = async (req, res) => {
     });
 } // End GET all service records
 
+// @route GET /service_record/{av_id}
+// GET all service records for single AV
+const getSingleAVSR = async (req, res) => {
+    console.log(req.params.av_id);
+
+    let params = {
+        TableName: 'Service_Records',
+        KeyConditionExpression: "#av_id = :av_id",
+        ExpressionAttributeNames: {"#av_id": "av_id"},
+        ExpressionAttributeValues: {":av_id": Number(req.params.av_id)}
+    };
+
+    nosql_con.query(params, function(err, result) {
+        if (err) {
+            console.log(err);
+            res.send({
+                "result": "Bad Request",
+                "status": 400,
+                "message": "Could not get service records"
+            });
+
+        }
+        else {
+            res.send({
+                "result": "success",
+                "status": 200,
+                "items": result
+            });
+        }
+    });
+} // End GET all service records for single AV
+
 
 
 module.exports = {
@@ -251,5 +287,6 @@ module.exports = {
     getELD,
     getSI,
     getRS,
-    getSR
+    getSR,
+    getSingleAVSR
 }

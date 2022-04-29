@@ -9,7 +9,8 @@ const {
     getELD,
     getSI,
     getRS,
-    getSR
+    getSR,
+    getSingleAVSR
 } = require('../controllers/NoSQLController')
 
 router.put('/service_record', insertSR)
@@ -21,5 +22,6 @@ router.get('/emergency_log', getELD)
 router.get('/sensor_info', getSI)
 router.get('/ride_statistic', getRS)
 router.get('/service_record', getSR)
+router.get('/service_record/:av_id', getSingleAVSR)
 
 module.exports = router;
