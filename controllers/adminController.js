@@ -324,6 +324,77 @@ const avRideHistory = async (req, res) => {
         });
 } // End GET AV ride history
 
+// @route /{adminName}/ride/info
+// Update Ride information
+const updateRide = async (req, res) => {
+
+    const body = req.body;
+    sql_con.query(`UPDATE Ride SET ride_date = IFNull(STR_TO_DATE(?, '%m/%d/%Y'), ride_date), ride_status = IFNull(?, ride_status), `+
+        `startLocation = IFNull(?, startLocation), finishLocation = IFNull(?, finishLocation), `+
+        `estimatedArrival = IFNull(STR_TO_DATE(?, '%m/%d/%Y %H:%i'), estimatedArrival) WHERE id = ?`,
+        [body.ride_date, body.ride_status, body.start_location, body.finish_location, body.estimated_arrival,
+            body.ride_id], function(err, result, fields) {
+            if (err) {
+                console.log(err);
+                res.send({
+                    "result": "Bad Request",
+                    "status": 400,
+                    "message": "Could not update Ride info"
+                });
+
+            }
+            // Else return success
+            else {
+                res.send({
+                    "result": "success",
+                    "status": 200
+                })
+            }
+        });
+} // End Update Ride Info
+
+// @route GET /{adminName}/ride/active
+// Retrieve all rides marked as 'in progress'
+const activeRides = async (req, res) => {
+
+    sql_con.query(`SELECT id, userName, ride_date, ride_status, av_id, startLocation, finishLocation, estimatedArrival `+
+        `FROM Ride WHERE ride_status LIKE 'in progress'`, [],
+        function(err, result, fields) {
+            if (err) {
+                console.log(err);
+                res.send({
+                    "result": "Not Found",
+                    "status": 404,
+                    "message": "Could not get active rides"
+                });
+
+            }
+
+            else {
+                if(result.length === 0) {
+                    res.send({
+                        "result": "Not Found",
+                        "status": 404,
+                        "message": "No active rides available"
+                    })
+                }
+                else {
+                    const rides = result.map(ride => ({Ride_ID: ride.id, Username: ride.userName,
+                        Start_Location: ride.startLocation, End_Location: ride.finishLocation,
+                        Estimated_Arrival: ride.estimatedArrival, Ride_Date: ride.ride_date,
+                        Ride_Status: ride.ride_status}));
+                    res.send({
+                        "result": "success",
+                        "status": 200,
+                        "Active_rides": rides
+                    })
+                }
+
+            }
+
+        });
+} // End GET active rides
+
 
 module.exports = {
     signUp,
@@ -334,5 +405,7 @@ module.exports = {
     createBill,
     allAVs,
     oneAV,
-    avRideHistory
+    avRideHistory,
+    updateRide,
+    activeRides
 }

@@ -208,8 +208,11 @@ const bookAV = async (req, res) => {
 // Get the status of the booked AV
 const getAVStatus = async (req, res) => {
 
-    sql_con.query(`SELECT location, id, moving_state FROM Autonomous_Vehicle WHERE id = (SELECT av_id FROM Ride WHERE userName LIKE ? `+
-                    `AND ride_status LIKE 'in progress')`, [req.params.userName],
+    sql_con.query(`SELECT location, Autonomous_Vehicle.id AS av_id, Ride.id as ride_id, `+
+        `moving_state, startLocation, finishLocation, estimatedArrival, ride_date `+
+        `FROM Autonomous_Vehicle JOIN Ride ON Autonomous_Vehicle.id = Ride.av_id `+
+        `WHERE Autonomous_Vehicle.id = (SELECT av_id FROM main.Ride WHERE userName LIKE ? `+
+        `AND ride_status LIKE 'in progress')`, [req.params.userName],
         function(err, result, fields) {
             if (err) {
                 console.log(err);
@@ -228,8 +231,13 @@ const getAVStatus = async (req, res) => {
                         "status": 200,
                         "AV_Status": {
                             "location": result[0].location,
-                            "AV_ID": result[0].id,
-                            "moving_state": result[0].moving_state
+                            "AV_ID": result[0].av_id,
+                            "Ride_ID": result[0].ride_id,
+                            "moving_state": result[0].moving_state,
+                            "start_location": result[0].startLocation,
+                            "finish_lcation": result[0].finishLocation,
+                            "estimated_arrival": result[0].estimatedArrival,
+                            "ride_date": result[0].ride_date
                         }
                     })
                 }
