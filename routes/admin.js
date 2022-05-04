@@ -12,7 +12,8 @@ const {
     oneAV,
     avRideHistory,
     updateRide,
-    activeRides
+    activeRides,
+    registerAV
 } = require('../controllers/adminController')
 
 // Will be reusing many of the user routes due to same functionality
@@ -35,6 +36,7 @@ router.post('/:userName/payment', updatePayment)
 router.post('/:userName/av/info', updateAV)
 router.post('/:userName/invoice/create', createBill)
 router.post('/:userName/ride/info', updateRide)
+router.post('/av/register', registerAV)
 
 router.put('/:userName/update', updateProfile)
 

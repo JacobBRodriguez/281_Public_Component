@@ -181,8 +181,10 @@ const createBill = async (req, res) => {
 
     const body = req.body;
     sql_con.query(`INSERT INTO Bill (bill_status, ride_id, cost, userName, bill_date, av_id) `+
-                    `VALUES ('outstanding', ?, ?, ?, now(), ?); UPDATE Ride SET ride_status = 'completed' `+
-        `WHERE id = ?` , [body.ride_id, body.cost, body.userName, body.AV_ID, body.ride_id],
+                    `VALUES ('outstanding', ?, ?, ?, now(), ?); UPDATE Ride SET ride_status = 'completed', `+
+        `bill_id = LAST_INSERT_ID() WHERE id = ?; UPDATE Autonomous_Vehicle SET service_state = 'Connected', `+
+        `userName = '' WHERE id = ?` ,
+        [body.ride_id, body.cost, body.userName, body.AV_ID, body.ride_id, body.AV_ID],
         function(err, result, fields) {
             if (err) {
                 console.log(err);
@@ -395,6 +397,36 @@ const activeRides = async (req, res) => {
         });
 } // End GET active rides
 
+// @route /av/register
+// Create new AV entry
+const registerAV = async (req, res) => {
+
+    let body = req.body;
+
+    sql_con.query(`INSERT INTO Autonomous_Vehicle (av_year, make, model, license) `+
+        `VALUES (STR_TO_DATE(?, '%Y'), ?, ?, ?); SELECT LAST_INSERT_ID() AS id`,[body.av_year,
+            body.av_make, body.av_model, body.av_license],
+        function(err, result, fields) {
+            if (err) {
+                console.log(err);
+                res.send({
+                    "result": "Bad Request",
+                    "status": 400,
+                    "message": "Could not create AV entry"
+                });
+
+            }
+            else {
+                console.log(result[0].insertId);
+                res.send({
+                    "result": "success",
+                    "status": 200,
+                    "New_AV_ID": result[0].insertId});
+            }
+
+        });
+} // End Create new AV entry
+
 
 module.exports = {
     signUp,
@@ -407,5 +439,6 @@ module.exports = {
     oneAV,
     avRideHistory,
     updateRide,
-    activeRides
+    activeRides,
+    registerAV
 }

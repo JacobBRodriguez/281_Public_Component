@@ -172,14 +172,16 @@ const bookAV = async (req, res) => {
 
     let body = req.body;
 
-    sql_con.query(`CALL bookAV(?,?, @av_out); SELECT @av_out AS result`, [body.av_id, req.params.userName],
+    sql_con.query(`CALL bookAV(?,?, ?, @av_out, @av_id, @ride_id); `+
+        `SELECT @av_out AS result, @av_id AS av_id, @ride_id AS ride_id`,
+        [body.start_location, body.finish_location, req.params.userName],
         function(err, result, fields) {
             if (err) {
                 console.log(err);
                 res.send({
-                    "result": "Not Found",
-                    "status": 404,
-                    "message": "Cannot find requested AV"
+                    "result": "Unavailable",
+                    "status": 400,
+                    "message": "Could not book AV"
                 });
 
             }
@@ -189,14 +191,16 @@ const bookAV = async (req, res) => {
                 if(result[1][0].result === "Booked"){
                     res.send({
                         "result": "success",
-                        "status": 200
+                        "status": 200,
+                        "Booked_AV_ID": result[1][0].av_id,
+                        "Ride_ID": result[1][0].ride_id
                     })
                 }
                 else {
                     res.send({
-                        "result": "Conflict",
-                        "status": 409,
-                        "message": "Cannot book the requested AV"
+                        "result": "Unavailable",
+                        "status": 400,
+                        "message": "No AVs currently available to book"
                     })
                 }
             }
